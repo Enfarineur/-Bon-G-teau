@@ -497,6 +497,21 @@
     localStorage.setItem(ticketsKey(pseudo), String(value));
   }
 
+  // Base clients pré-enregistrée : ces tickets ne sont écrits que si le client n'a pas
+  // déjà un compteur dans ce navigateur (pour ne jamais écraser une progression existante).
+  const SEED_TICKETS = {
+    'capry': 500,
+    'shadoxx': 568,
+    'piscou le riche': 3000,
+    'choc': 280,
+    'chizuya': 700
+  };
+  Object.keys(SEED_TICKETS).forEach(function (pseudo) {
+    if (getTickets(pseudo) === null) {
+      setTickets(pseudo, SEED_TICKETS[pseudo]);
+    }
+  });
+
   function gradeForTickets(ticketCount) {
     let g = null;
     GRADES.forEach(function (gr) { if (ticketCount >= gr.required) g = gr; });
