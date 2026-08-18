@@ -296,19 +296,20 @@
   <section id="sec-loyalty">
     <div class="section-head"><span class="icon">🎫</span><h2>Carte de fidélité</h2></div>
     <div class="loyalty-info">
-      <b>1 Ticket</b> = 10 D.C dépensés &nbsp;·&nbsp; <b>Bonus +50 Tickets</b> à la toute première commande enregistrée sous un pseudo <i>(ne s'applique qu'une seule fois, tant que ce pseudo n'a jamais commandé)</i> &nbsp;·&nbsp; <b>Bonus +100 Tickets</b> en cas de parrainage
+      <b>1 Ticket</b> = 10 D.C dépensés &nbsp;·&nbsp; <b>Bonus +50 Tickets</b> &nbsp;·&nbsp; <b>Bonus +100 Tickets</b> en cas de parrainage
+      <br /><span style="font-size:0.72rem;">⚠️ Les gâteaux/plats offerts par grade ne s'appliquent que si la commande contient au moins autant de gâteaux que le grade en offre (ex. Melpacalé → 100 gâteaux commandés minimum).</span>
     </div>
     <div class="grade-scroll">
       <div class="grade-card"><div class="grade-label">Grade I</div><div class="grade-name">Lamballoné</div><div class="ticket-badge">500 Tickets</div>
-        <ul><li>50 gâteaux offerts par commande</li><li>Accès aux évènements fidélité</li></ul></div>
+        <ul><li>50 gâteaux offerts par commande <i>(dès 50 gâteaux commandés)</i></li><li>Accès aux évènements fidélité</li></ul></div>
       <div class="grade-card"><div class="grade-label">Grade II</div><div class="grade-name">Melpacalé</div><div class="ticket-badge">1 500 Tickets</div>
-        <ul><li>100 gâteaux offerts par commande</li><li>25 plats offerts par commande</li></ul></div>
+        <ul><li>100 gâteaux offerts par commande <i>(dès 100 gâteaux commandés)</i></li><li>25 plats offerts par commande</li></ul></div>
       <div class="grade-card"><div class="grade-label">Grade III</div><div class="grade-name">Mammorestomac</div><div class="ticket-badge">3 000 Tickets</div>
-        <ul><li>150 gâteaux offerts par commande</li><li>50 plats offerts par commande</li><li>1 commande prioritaire/semaine</li></ul></div>
+        <ul><li>150 gâteaux offerts par commande <i>(dès 150 gâteaux commandés)</i></li><li>50 plats offerts par commande</li><li>1 commande prioritaire/semaine</li></ul></div>
       <div class="grade-card"><div class="grade-label">Grade IV</div><div class="grade-name">Gobe-Faim</div><div class="ticket-badge">6 000 Tickets</div>
-        <ul><li>250 gâteaux offerts par commande</li><li>100 plats offerts par commande</li><li>Toutes les commandes prioritaires</li></ul></div>
+        <ul><li>250 gâteaux offerts par commande <i>(dès 250 gâteaux commandés)</i></li><li>100 plats offerts par commande</li><li>Toutes les commandes prioritaires</li></ul></div>
       <div class="grade-card"><div class="grade-label">Grade V</div><div class="grade-name">Maraith'Pas</div><div class="ticket-badge">10 000 Tickets</div>
-        <ul><li>500 gâteaux offerts par commande</li><li>200 plats offerts par commande</li><li>Priorité absolue</li><li>1 Pal Full Boost au choix offert <i>(sauf pal légendaire)</i></li></ul></div>
+        <ul><li>500 gâteaux offerts par commande <i>(dès 500 gâteaux commandés)</i></li><li>200 plats offerts par commande</li><li>Priorité absolue</li><li>1 Pal Full Boost au choix offert <i>(sauf pal légendaire)</i></li></ul></div>
     </div>
   </section>
 
@@ -585,8 +586,11 @@
     // Grade fidélité du client, basé sur ses tickets déjà enregistrés (n'influe pas non plus sur le prix)
     const currentTickets = getTickets(els.pseudo.value) || 0;
     const grade = gradeForTickets(currentTickets);
-    const gradeFreeCakes = grade ? grade.freeCakes : 0;
-    const gradeFreeDishes = grade ? grade.freeDishes : 0;
+    // Pour bénéficier des gâteaux/plats offerts du grade, il faut commander au moins autant de
+    // gâteaux que le grade en offre (ex. Melpacalé offre 100 gâteaux -> 100 gâteaux minimum commandés)
+    const gradeMinCakesMet = grade ? (totalCakesQty >= grade.freeCakes) : false;
+    const gradeFreeCakes = (grade && gradeMinCakesMet) ? grade.freeCakes : 0;
+    const gradeFreeDishes = (grade && gradeMinCakesMet) ? grade.freeDishes : 0;
 
     els.total.textContent = total + ' D.C';
     els.cartCount.textContent = totalArticles > 0 ? totalArticles + ' article(s) au panier' : 'Panier vide';
@@ -596,7 +600,8 @@
     const extraLines = [];
     if (priorityFee > 0) extraLines.push('<div><b>Commande prioritaire : +' + priorityFee + ' D.C</b></div>');
     if (auxFourneauxFreeCakes > 0) extraLines.push('<div>🔥 Offre "Aux fourneaux !" : +' + auxFourneauxFreeCakes + ' gâteaux offerts <i>(en plus, gratuits)</i></div>');
-    if (grade) extraLines.push('<div>🎫 ' + grade.label + ' (' + grade.name + ') : +' + gradeFreeCakes + ' gâteaux offerts, +' + gradeFreeDishes + ' plats offerts <i>(en plus, gratuits)</i></div>');
+    if (grade && gradeMinCakesMet) extraLines.push('<div>🎫 ' + grade.label + ' (' + grade.name + ') : +' + gradeFreeCakes + ' gâteaux offerts, +' + gradeFreeDishes + ' plats offerts <i>(en plus, gratuits)</i></div>');
+    if (grade && !gradeMinCakesMet) extraLines.push('<div>🎫 ' + grade.label + ' (' + grade.name + ') : commande ' + (grade.freeCakes - totalCakesQty) + ' gâteau(x) de plus pour débloquer les avantages de ce grade <i>(minimum ' + grade.freeCakes + ' gâteaux commandés)</i></div>');
     if (dimancheGourmand) extraLines.push('<div>🎉 Offre "Dimanche Gourmand" : tickets fidélité doublés !</div>');
 
     els.cartDetails.innerHTML = lines.length
@@ -612,7 +617,7 @@
       els.gradeBadge.classList.add('visible');
       els.gradeBadge.innerHTML = '<div class="gb-title">' + (grade ? grade.label + ' — ' + grade.name : 'Pas encore de grade') + '</div>'
         + currentTickets + ' tickets actuels'
-        + (grade ? ' · ' + grade.freeCakes + ' gâteaux et ' + grade.freeDishes + ' plats offerts par commande' : '')
+        + (grade ? ' · ' + grade.freeCakes + ' gâteaux et ' + grade.freeDishes + ' plats offerts par commande (dès ' + grade.freeCakes + ' gâteaux commandés)' : '')
         + (nextGrade ? ' · encore ' + (nextGrade.required - currentTickets) + ' tickets avant ' + nextGrade.label : '');
     } else {
       els.gradeBadge.classList.remove('visible');
@@ -621,7 +626,7 @@
 
     return {
       total: total, totalArticles: totalArticles, lines: lines, priorityFee: priorityFee,
-      auxFourneauxFreeCakes: auxFourneauxFreeCakes, grade: grade,
+      auxFourneauxFreeCakes: auxFourneauxFreeCakes, grade: grade, gradeMinCakesMet: gradeMinCakesMet,
       gradeFreeCakes: gradeFreeCakes, gradeFreeDishes: gradeFreeDishes,
       currentTickets: currentTickets, ticketsToEarn: ticketsToEarn, dimancheGourmand: dimancheGourmand
     };
@@ -657,7 +662,7 @@
 
     const offersLines = [];
     if (summary.auxFourneauxFreeCakes > 0) offersLines.push('🔥 "Aux fourneaux !" : +' + summary.auxFourneauxFreeCakes + ' gâteaux offerts (en plus, gratuits)');
-    if (summary.grade) offersLines.push('🎫 ' + summary.grade.label + ' (' + summary.grade.name + ') : +' + summary.gradeFreeCakes + ' gâteaux offerts, +' + summary.gradeFreeDishes + ' plats offerts (en plus, gratuits)');
+    if (summary.grade && summary.gradeMinCakesMet) offersLines.push('🎫 ' + summary.grade.label + ' (' + summary.grade.name + ') : +' + summary.gradeFreeCakes + ' gâteaux offerts, +' + summary.gradeFreeDishes + ' plats offerts (en plus, gratuits)');
     if (summary.dimancheGourmand) offersLines.push('🎉 "Dimanche Gourmand" : tickets fidélité doublés');
 
     const isFirstOrder = getTickets(pseudo) === null;
